@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 3001;
 app.use(
   cors({
     origin: process.env.FRONTEND_URL || "http://localhost:3000",
-    credentials: true, // needed so cookies are sent cross-origin
+    credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     allowedHeaders: ["Content-Type"],
   }),
@@ -22,6 +22,8 @@ app.use(
 app.use(express.json());
 
 // ── Sessions ──────────────────────────────────────────────────────────────────
+app.set("trust proxy", 1);
+
 app.use(
   session({
     secret:
@@ -30,8 +32,9 @@ app.use(
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: false, // set true in production with HTTPS
-      maxAge: 8 * 60 * 60 * 1000, // 8 hours
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 8 * 60 * 60 * 1000,
     },
   }),
 );
@@ -66,8 +69,8 @@ async function start() {
   await migrate();
   await seed();
   app.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
-    console.log(`📋 API at http://localhost:${PORT}/api`);
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`📋 API at /api`);
   });
 }
 
