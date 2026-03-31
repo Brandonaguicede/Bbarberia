@@ -7,7 +7,7 @@ router.get('/stats', requireAdmin, ctrl.getStats);
 router.get('/available-slots', ctrl.getAvailableSlots);
 router.get('/', requireAuth, ctrl.getAll);
 router.get('/:id', requireAuth, ctrl.getById);
-router.post('/', requireAuth, ctrl.create);
+router.post('/', ctrl.create);
 router.put('/:id', requireAdmin, ctrl.update);
 router.patch('/:id/status', requireAdmin, ctrl.updateStatus);
 router.delete('/:id', requireAdmin, ctrl.remove);
