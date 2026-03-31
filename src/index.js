@@ -13,18 +13,22 @@ const PORT = process.env.PORT || 3001;
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
+  "https://barberia-wheat.vercel.app",
   process.env.FRONTEND_URL,
 ].filter(Boolean);
 
 const corsOptions = {
-  origin: function (origin, callback) {
+  origin: (origin, callback) => {
+    // permitir requests sin origin (navegador directo, health checks, etc.)
     if (!origin) return callback(null, true);
 
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
 
-    return callback(new Error(`CORS bloqueado para origen: ${origin}`));
+    console.log("❌ CORS bloqueado para origen:", origin);
+    console.log("✅ Allowed origins:", allowedOrigins);
+    return callback(null, false);
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
@@ -60,17 +64,14 @@ app.use("/api/barbers", require("./routes/barbers"));
 app.use("/api/services", require("./routes/services"));
 app.use("/api/appointments", require("./routes/appointments"));
 
-// Health check (public)
 app.get("/api/health", (_, res) =>
   res.json({ status: "ok", timestamp: new Date().toISOString() }),
 );
 
-// 404
 app.use((req, res) =>
   res.status(404).json({ success: false, message: "Ruta no encontrada" }),
 );
 
-// Error handler
 app.use((err, req, res, _next) => {
   console.error(err.stack || err.message);
   res
@@ -78,14 +79,16 @@ app.use((err, req, res, _next) => {
     .json({ success: false, message: err.message || "Error interno del servidor" });
 });
 
-// ── Start ─────────────────────────────────────────────────────────────────────
 async function start() {
   await testConnection();
-  await migrate();
-  await seed();
+
+  if (process.env.NODE_ENV !== "production") {
+    await migrate();
+    await seed();
+  }
+
   app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`📋 API at /api`);
     console.log("🌐 Allowed origins:", allowedOrigins);
   });
 }
